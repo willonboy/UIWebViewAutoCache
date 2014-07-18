@@ -10,6 +10,8 @@
 #import <CFNetwork/CFNetwork.h>
 
 @interface AutoCacheWebView : UIWebView
+    //请求超时时间默认30秒
+@property(nonatomic) float timeoutInterval;
 
 - (void)loadUrl:(NSString *)urlStr baseUrl:(NSString *)baseUrl
 responseEncodingName:(NSStringEncoding)encodingName completeBlock:(void (^)(NSError *err))completeBlock;

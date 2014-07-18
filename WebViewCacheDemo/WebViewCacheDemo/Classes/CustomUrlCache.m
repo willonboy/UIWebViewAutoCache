@@ -11,12 +11,22 @@
 @implementation CustomUrlCache
 
 static NSString *cacheDirect = nil;
+    //替换请求的web文件为资源包里的相对应的文件
+static NSDictionary *replaceRequestFileWithLocalFile = nil;
 
 + (void)setCacheDirectPath:(NSString *)directPath
 {
     @synchronized(cacheDirect)
     {
         cacheDirect = directPath;
+    }
+}
+
++ (void)setReplaceRequestFileWithLocalFile:(NSDictionary *)replaceFiles
+{
+    @synchronized(replaceRequestFileWithLocalFile)
+    {
+        replaceRequestFileWithLocalFile = replaceFiles;
     }
 }
 
@@ -53,6 +63,18 @@ static NSString *cacheDirect = nil;
         dispatch_once(&onceToken, ^{
             
             [NSURLCache setSharedURLCache:[CustomUrlCache new]];
+            
+            NSString *path = [[NSBundle mainBundle] pathForResource:kLocalWebSourceDirectory ofType:nil];
+            NSString *destPath = [NSString stringWithFormat:@"%@/Documents/%@", NSHomeDirectory(), kLocalWebSourceDirectory];
+            
+            NSError *err = nil;
+            if ([[NSFileManager defaultManager] fileExistsAtPath:destPath])
+            {
+                [[NSFileManager defaultManager] removeItemAtPath:destPath error:&err];
+            }
+                //默认copy一份到Documents/xxx, 这样方便日后更新, 当前没有实现更新
+            [[NSFileManager defaultManager] copyItemAtPath:path toPath:destPath error:nil];
+            
         });
     }
 }
@@ -114,6 +136,18 @@ static NSString *cacheDirect = nil;
     return ext;
 }
 
+
+- (NSString *)getUrlWithParsUrl:(NSString *)absoluteUrl
+{
+    NSString *targetUrl = absoluteUrl;
+    NSRange rang = [absoluteUrl rangeOfString:@"?"];
+    if (rang.location != NSNotFound)
+    {
+        targetUrl = [targetUrl substringToIndex:rang.location];
+    }
+    return targetUrl;
+}
+
 - (NSData *)dataForURL:(NSString *)url
 {
     NSString *cacheDirect = [self webCacheDirectPath];
@@ -152,6 +186,21 @@ static NSString *cacheDirect = nil;
 #endif
 }
 
+    //本地存不存在打包时就发布的web资源文件
+- (NSString *)loadLocalWebSourcePathWithUrl:(NSString *)absoluteUrl
+{
+    if (replaceRequestFileWithLocalFile && [replaceRequestFileWithLocalFile count])
+    {
+        if ([replaceRequestFileWithLocalFile.allKeys containsObject:absoluteUrl])
+        {
+            NSString *localWebSourceFileName = replaceRequestFileWithLocalFile[absoluteUrl];
+            NSString *path = [NSString stringWithFormat:@"%@/Documents/%@/%@", NSHomeDirectory(), kLocalWebSourceDirectory, localWebSourceFileName];
+            return path;
+        }
+    }
+    return nil;
+}
+
 - (NSCachedURLResponse *)cachedResponseForRequest:(NSURLRequest *)request
 {
     NSString *pathString = [[request URL] absoluteString];
@@ -173,6 +222,21 @@ static NSString *cacheDirect = nil;
         return [[NSCachedURLResponse alloc] initWithResponse:response data:data];
     }
     
+    if (replaceRequestFileWithLocalFile && [replaceRequestFileWithLocalFile count])
+    {
+        NSString *targetUrl = [self getUrlWithParsUrl:request.URL.absoluteString];
+        if ([replaceRequestFileWithLocalFile.allKeys containsObject:targetUrl])
+        {
+            NSString *localWebCacheFilePath = [self loadLocalWebSourcePathWithUrl:request.URL.absoluteString];
+            NSData *data = [NSData dataWithContentsOfFile:localWebCacheFilePath];
+            if (data && data.length)
+            {
+                NSURLResponse *response = [[NSURLResponse alloc] initWithURL:[request URL] MIMEType:mime expectedContentLength:[data length] textEncodingName:nil];
+                return [[NSCachedURLResponse alloc] initWithResponse:response data:data];
+            }
+        }
+    }
+    
     return [super cachedResponseForRequest:request];
 }
 
@@ -185,6 +249,13 @@ static NSString *cacheDirect = nil;
     if (![supportExt containsObject:ext])
     {
         [super storeCachedResponse:cachedResponse forRequest:request];
+        return;
+    }
+    
+    NSString *localWebCacheFilePath = [self loadLocalWebSourcePathWithUrl:request.URL.absoluteString];
+        //如果存在就不再缓存
+    if (localWebCacheFilePath)
+    {
         return;
     }
     

@@ -9,9 +9,15 @@
 #import <Foundation/Foundation.h>
 #import <CommonCrypto/CommonDigest.h>
 
+#define kLocalWebSourceDirectory            (@"web_sources")
+
+
 @interface CustomUrlCache : NSURLCache
 
 + (void)setCacheDirectPath:(NSString *)directPath;
+
++ (void)setReplaceRequestFileWithLocalFile:(NSDictionary *)replaceFiles;
+
 + (instancetype)sharedCache;
 
 + (void)buildGlobalWebCache;

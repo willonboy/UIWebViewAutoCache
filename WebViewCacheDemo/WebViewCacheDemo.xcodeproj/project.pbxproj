@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		B225A5C91979172300B37DC6 /* web_sources in Resources */ = {isa = PBXBuildFile; fileRef = B225A5C81979172300B37DC6 /* web_sources */; };
 		B2569E44196521D300FC965C /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B2569E43196521D300FC965C /* Foundation.framework */; };
 		B2569E46196521D300FC965C /* CoreGraphics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B2569E45196521D300FC965C /* CoreGraphics.framework */; };
 		B2569E48196521D300FC965C /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B2569E47196521D300FC965C /* UIKit.framework */; };
@@ -36,6 +37,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		B225A5C81979172300B37DC6 /* web_sources */ = {isa = PBXFileReference; lastKnownFileType = folder; path = web_sources; sourceTree = "<group>"; };
 		B2569E40196521D300FC965C /* WebViewCacheDemo.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = WebViewCacheDemo.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		B2569E43196521D300FC965C /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
 		B2569E45196521D300FC965C /* CoreGraphics.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreGraphics.framework; path = System/Library/Frameworks/CoreGraphics.framework; sourceTree = SDKROOT; };
@@ -125,6 +127,7 @@
 				B2569E74196521EE00FC965C /* RootViewController.xib */,
 				B2A1ED86197382D500379FDD /* Classes */,
 				B2569E55196521D300FC965C /* Images.xcassets */,
+				B225A5C81979172300B37DC6 /* web_sources */,
 				B2569E4A196521D300FC965C /* Supporting Files */,
 			);
 			path = WebViewCacheDemo;
@@ -245,6 +248,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				B225A5C91979172300B37DC6 /* web_sources in Resources */,
 				B2569E4E196521D300FC965C /* InfoPlist.strings in Resources */,
 				B2569E56196521D300FC965C /* Images.xcassets in Resources */,
 				B2569E76196521EE00FC965C /* RootViewController.xib in Resources */,

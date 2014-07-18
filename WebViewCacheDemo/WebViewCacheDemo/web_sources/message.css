@@ -1,0 +1,15 @@
+@charset "utf-8";
+body,ul,ol,dl,dt,p,h1,h2,h3,h4,h5,h6,form,fieldset,legend,input,textarea,p,blockquote,figure,hr,menu,dir,thead,tbody,tfoot,th,td {padding: 0; margin: 0;}
+body {font-size: 14px;}
+body,button,input,select,textarea{font-family: helveticaneue,'helvetica neue';-ms-text-autospace: ideograph-alpha ideograph-numeric ideograph-parenthesis;text-autospace: ideograph-alpha ideograph-numeric ideograph-parenthesis;}
+* {
+    word-break:break-all; /*支持IE，chrome，FF不支持*/
+    word-wrap:break-word;/*支持IE，chrome，FF*/
+}
+ul,ol {
+    list-style-type: none;
+    list-style-image: none;
+}
+.fn-clear:after {clear: both; visibility: hidden; display: block; content: ""; height: 0;}
+.fn-clear {zoom: 1;}
+a {color: #0099bb; text-decoration: none;}

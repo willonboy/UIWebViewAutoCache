@@ -26,8 +26,7 @@
     self = [super init];
     if (self)
     {
-        [CustomUrlCache buildGlobalWebCache];
-        self.responseEncoding = NSUTF8StringEncoding;
+        [self preLoad];
     }
     return self;
 }
@@ -37,10 +36,16 @@
     self = [super initWithFrame:frame];
     if (self)
     {
-        [CustomUrlCache buildGlobalWebCache];
-        self.responseEncoding = NSUTF8StringEncoding;
+        [self preLoad];
     }
     return self;
+}
+
+- (void)preLoad
+{    
+    [CustomUrlCache buildGlobalWebCache];
+    self.responseEncoding = NSUTF8StringEncoding;
+    self.timeoutInterval = 10;
 }
 
 - (void)loadUrl:(NSString *)urlStr baseUrl:(NSString *)baseUrl responseEncodingName:(NSStringEncoding)encodingName completeBlock:(void (^)(NSError *err))completeBlock
@@ -55,7 +60,7 @@
 - (void)startLoad
 {
     NSURL *url = [NSURL URLWithString:self.requestUrlStr relativeToURL:[NSURL URLWithString:self.baseUrlStr]];
-    NSMutableURLRequest *request =[NSMutableURLRequest requestWithURL:url cachePolicy:NSURLRequestReloadIgnoringLocalCacheData timeoutInterval:60];
+    NSMutableURLRequest *request =[NSMutableURLRequest requestWithURL:url cachePolicy:NSURLRequestReloadIgnoringLocalCacheData timeoutInterval:self.timeoutInterval];
     [request setHTTPMethod:@"GET"];
     [NSURLConnection connectionWithRequest:request delegate:self];
 }
@@ -113,7 +118,14 @@
     
     if (self.completeBlock)
     {
-        self.completeBlock(nil);
+        if (self.responseData)
+        {
+            self.completeBlock(nil);
+        }
+        else
+        {
+            self.completeBlock([NSError errorWithDomain:@"auto.webview.cache" code:10000 userInfo:@{@"message":@"no data"}]);
+        }
     }
 }
 

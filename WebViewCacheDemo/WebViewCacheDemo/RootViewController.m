@@ -7,6 +7,7 @@
 //
 
 #import "RootViewController.h"
+#import "CustomUrlCache.h"
 
 @interface RootViewController ()
 
@@ -19,21 +20,22 @@
 {
     [super viewDidLoad];
     
+    NSDictionary *localWebSourcesFiles = @{@"http://www.ifanr.com/res/css/message.css":@"message.css",
+                                           @"http://www.ifanr.com/res/js/lib/jquery.js":@"jquery.js"};
+    [CustomUrlCache setReplaceRequestFileWithLocalFile:localWebSourcesFiles];
+    
+    
+    
+    
     self.webView = [[AutoCacheWebView alloc] initWithFrame:CGRectMake(0, 64, 320, 504)];
     self.webView.delegate = self;
-    
-    self.webView.autoresizingMask = (UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight);
     self.webView.scalesPageToFit = YES;
-    self.webView.dataDetectorTypes = UIDataDetectorTypeLink;
-    self.webView.userInteractionEnabled = YES;
-    self.webView.backgroundColor = [UIColor clearColor];
-    self.webView.scrollView.minimumZoomScale = 0.1;
     [self.view addSubview:self.webView];
     
-    NSString *url = @"http://www.ifanr.com";
+    NSString *baseUrl = @"http://www.ifanr.com";
+    NSString *url = @"/432516";
     
-        // [self.webView loadRequest:[[NSURLRequest alloc] initWithURL:[NSURL URLWithString:url]]];
-    [self.webView loadUrl:url baseUrl:@"/432516" responseEncodingName:NSUTF8StringEncoding completeBlock:^(NSError *err) {
+    [self.webView loadUrl:url baseUrl:baseUrl responseEncodingName:NSUTF8StringEncoding completeBlock:^(NSError *err) {
         
         UIAlertView *alert = [[UIAlertView alloc] initWithTitle:nil message:@"请求html完成" delegate:nil cancelButtonTitle:@"sure" otherButtonTitles:nil];
         [alert show];

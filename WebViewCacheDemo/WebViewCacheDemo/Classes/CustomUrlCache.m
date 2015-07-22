@@ -103,15 +103,21 @@ static NSDictionary *replaceRequestFileWithLocalFile = nil;
         if (!cacheDirect)
         {
             cacheDirect = NSHomeDirectory();
-            cacheDirect = [NSString stringWithFormat:@"%@/%@/", cacheDirect, @"webCache"];
+            cacheDirect = [NSString stringWithFormat:@"%@/Documents/%@/", cacheDirect, @"webCache"];
         }
         direct = cacheDirect;
     }
     
     BOOL isDirect = NO;
+    NSError *err = nil;
     if (![[NSFileManager defaultManager] fileExistsAtPath:direct isDirectory:&isDirect] || !isDirect)
     {
-        [[NSFileManager defaultManager] createDirectoryAtPath:direct withIntermediateDirectories:NO attributes:nil error:nil];
+        [[NSFileManager defaultManager] createDirectoryAtPath:direct withIntermediateDirectories:NO attributes:nil error:&err];
+    }
+    
+    if (err)
+    {
+        NSLog(@"创建webcache目录失败%@", err);
     }
     
     return direct;
@@ -175,9 +181,13 @@ static NSDictionary *replaceRequestFileWithLocalFile = nil;
     NSString *ext = [self getExtFromUrl:url];
     ext = ext ? [NSString stringWithFormat:@".%@", ext] : nil;
     NSString *cachePath = [NSString stringWithFormat:@"%@/%@%@", cacheDirect, md5, ext ? ext : @""];
-    [data writeToFile:cachePath atomically:YES];
+    BOOL isSuccess = [data writeToFile:cachePath atomically:YES];
     
 #ifdef DEBUG
+    if (!isSuccess)
+    {
+        NSLog(@"cache failed");
+    }
     NSLog(@"store url %@ to %@", url, cachePath);
     if ([self hasDataForURL:url])
     {

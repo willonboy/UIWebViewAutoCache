@@ -62,7 +62,7 @@ static NSDictionary *replaceRequestFileWithLocalFile = nil;
         static dispatch_once_t onceToken;
         dispatch_once(&onceToken, ^{
             
-            [NSURLCache setSharedURLCache:[CustomUrlCache new]];
+            [NSURLCache setSharedURLCache:[CustomUrlCache sharedCache]];
             
             NSString *path = [[NSBundle mainBundle] pathForResource:kLocalWebSourceDirectory ofType:nil];
             NSString *destPath = [NSString stringWithFormat:@"%@/Documents/%@", NSHomeDirectory(), kLocalWebSourceDirectory];

@@ -83,7 +83,7 @@ static NSDictionary *replaceRequestFileWithLocalFile = nil;
 {
     NSString *cacheDirect = [self webCacheDirectPath];
     NSString *md5 = [CustomUrlCache md5String:url];
-    NSString *ext = [url pathExtension];
+    NSString *ext = [self getExtFromUrl:url];
     ext = ext ? [NSString stringWithFormat:@".%@", ext] : nil;
     NSString *cachePath = [NSString stringWithFormat:@"%@/%@%@", cacheDirect, md5, ext ? ext : @""];
     

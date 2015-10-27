@@ -14,6 +14,13 @@ static NSString *cacheDirect = nil;
     //替换请求的web文件为资源包里的相对应的文件
 static NSDictionary *replaceRequestFileWithLocalFile = nil;
 
+NSArray *supportExt = nil;
+
++ (void)initialize
+{
+    supportExt      = @[@"jpg", @"jpeg", @"png", @"gif", @"css", @"js"];
+}
+
 + (void)setCacheDirectPath:(NSString *)directPath
 {
     @synchronized(cacheDirect)
@@ -50,7 +57,10 @@ static NSDictionary *replaceRequestFileWithLocalFile = nil;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
         
-        _shareInstance = [CustomUrlCache new];
+//        _shareInstance  = [CustomUrlCache new];
+        
+        cacheDirect = [NSString stringWithFormat:@"%@/Documents/%@/", NSHomeDirectory(), @"webCache"];
+        _shareInstance = [[CustomUrlCache alloc] initWithMemoryCapacity:4 * 1024 * 1024 diskCapacity:20 * 1024 * 1024 diskPath:cacheDirect];
     });
     return _shareInstance;
 }
@@ -64,17 +74,20 @@ static NSDictionary *replaceRequestFileWithLocalFile = nil;
             
             [NSURLCache setSharedURLCache:[CustomUrlCache sharedCache]];
             
-            NSString *path = [[NSBundle mainBundle] pathForResource:kLocalWebSourceDirectory ofType:nil];
             NSString *destPath = [NSString stringWithFormat:@"%@/Documents/%@", NSHomeDirectory(), kLocalWebSourceDirectory];
             
             NSError *err = nil;
-            if ([[NSFileManager defaultManager] fileExistsAtPath:destPath])
+            if (![[NSFileManager defaultManager] fileExistsAtPath:destPath])
             {
-                [[NSFileManager defaultManager] removeItemAtPath:destPath error:&err];
+                    //[[NSFileManager defaultManager] removeItemAtPath:destPath error:&err];
+                NSString *path = [[NSBundle mainBundle] pathForResource:kLocalWebSourceDirectory ofType:nil];
+                    //默认copy一份工程中web_sources目录到Documents/xxx, 这样方便日后更新, 当前没有实现更新
+                BOOL isSuccess = [[NSFileManager defaultManager] copyItemAtPath:path toPath:destPath error:&err];
+                if (err || !isSuccess)
+                {
+                    NSLog(@"err %@", err);
+                }
             }
-                //默认copy一份到Documents/xxx, 这样方便日后更新, 当前没有实现更新
-            [[NSFileManager defaultManager] copyItemAtPath:path toPath:destPath error:nil];
-            
         });
     }
 }
@@ -102,8 +115,7 @@ static NSDictionary *replaceRequestFileWithLocalFile = nil;
     {
         if (!cacheDirect)
         {
-            cacheDirect = NSHomeDirectory();
-            cacheDirect = [NSString stringWithFormat:@"%@/Documents/%@/", cacheDirect, @"webCache"];
+            cacheDirect = [NSString stringWithFormat:@"%@/Documents/%@/", NSHomeDirectory(), @"webCache"];
         }
         direct = cacheDirect;
     }
@@ -119,7 +131,6 @@ static NSDictionary *replaceRequestFileWithLocalFile = nil;
     {
         NSLog(@"创建webcache目录失败%@", err);
     }
-    
     return direct;
 }
 
@@ -180,20 +191,23 @@ static NSDictionary *replaceRequestFileWithLocalFile = nil;
     NSString *md5 = [CustomUrlCache md5String:url];
     NSString *ext = [self getExtFromUrl:url];
     ext = ext ? [NSString stringWithFormat:@".%@", ext] : nil;
-    NSString *cachePath = [NSString stringWithFormat:@"%@/%@%@", cacheDirect, md5, ext ? ext : @""];
-    BOOL isSuccess = [data writeToFile:cachePath atomically:YES];
-    
+    NSString *cachePath = [NSString stringWithFormat:@"%@%@%@", cacheDirect, md5, ext ? ext : @""];
+    if(![[NSFileManager defaultManager] fileExistsAtPath:cachePath])
+    {
+        BOOL isSuccess = [data writeToFile:cachePath atomically:YES];
+        
 #ifdef DEBUG
-    if (!isSuccess)
-    {
-        NSLog(@"cache failed");
-    }
-    NSLog(@"store url %@ to %@", url, cachePath);
-    if ([self hasDataForURL:url])
-    {
-        NSLog(@"store success");
-    }
+        if (!isSuccess)
+        {
+            NSLog(@"cache failed");
+        }
+        NSLog(@"store url %@ to %@", url, cachePath);
+        if ([self hasDataForURL:url])
+        {
+            NSLog(@"store success");
+        }
 #endif
+    }
 }
 
     //本地存不存在打包时就发布的web资源文件
@@ -213,10 +227,10 @@ static NSDictionary *replaceRequestFileWithLocalFile = nil;
 
 - (NSCachedURLResponse *)cachedResponseForRequest:(NSURLRequest *)request
 {
+    NSLog(@"cachedResponseForRequest %@", request.URL.absoluteString);
     NSString *pathString = [[request URL] absoluteString];
     NSString *ext = [self getExtFromUrl:pathString];
     
-    NSArray *supportExt = @[@"jpg", @"jpeg", @"png", @"gif", @"css", @"js"];
     if (![supportExt containsObject:ext])
     {
         return [super cachedResponseForRequest:request];
@@ -225,9 +239,9 @@ static NSDictionary *replaceRequestFileWithLocalFile = nil;
     NSDictionary *cacheMimeDict = @{@"jpg":@"image/jpg", @"jpeg":@"image/jpeg", @"png":@"image/png", @"gif":@"image/gif", @"css":@"text/css", @"js":@"application/javascript"};
     NSString *mime = cacheMimeDict[ext];
     
-    if ([[CustomUrlCache sharedCache] hasDataForURL:pathString])
+    if ([self hasDataForURL:pathString])
     {
-        NSData *data = [[CustomUrlCache sharedCache] dataForURL:pathString];
+        NSData *data = [self dataForURL:pathString];
         NSURLResponse *response = [[NSURLResponse alloc] initWithURL:[request URL] MIMEType:mime expectedContentLength:[data length] textEncodingName:nil];
         return [[NSCachedURLResponse alloc] initWithResponse:response data:data];
     }
@@ -255,7 +269,12 @@ static NSDictionary *replaceRequestFileWithLocalFile = nil;
     NSString *pathString = [[request URL] absoluteString];
     NSString *ext = [self getExtFromUrl:pathString];
     
-    NSArray *supportExt = @[@"jpg", @"jpeg", @"png", @"gif", @"css", @"js"];
+    if ([self hasDataForURL:pathString])
+    {
+        return;
+    }
+    
+    NSLog(@"storeCachedResponse %@", pathString);
     if (![supportExt containsObject:ext])
     {
         [super storeCachedResponse:cachedResponse forRequest:request];
@@ -269,7 +288,7 @@ static NSDictionary *replaceRequestFileWithLocalFile = nil;
         return;
     }
     
-    [[CustomUrlCache sharedCache] storeData:cachedResponse.data forURL:pathString];
+    [self storeData:cachedResponse.data forURL:pathString];
 }
 
 - (void)storeCachedResponse:(NSCachedURLResponse *)cachedResponse forDataTask:(NSURLSessionDataTask *)dataTask
@@ -350,3 +369,7 @@ static NSDictionary *replaceRequestFileWithLocalFile = nil;
 }
 
 @end
+
+
+
+

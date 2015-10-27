@@ -272,4 +272,81 @@ static NSDictionary *replaceRequestFileWithLocalFile = nil;
     [[CustomUrlCache sharedCache] storeData:cachedResponse.data forURL:pathString];
 }
 
+- (void)storeCachedResponse:(NSCachedURLResponse *)cachedResponse forDataTask:(NSURLSessionDataTask *)dataTask
+{
+    NSString *pathString = [[dataTask.currentRequest URL] absoluteString];
+    NSLog(@"storeCachedResponse forDataTask %@", pathString);
+    
+    NSString *ext = [self getExtFromUrl:pathString];
+    
+    if ([self hasDataForURL:pathString])
+    {
+        return;
+    }
+    
+    NSLog(@"storeCachedResponse %@", pathString);
+    if (![supportExt containsObject:ext])
+    {
+        [super storeCachedResponse:cachedResponse forDataTask:dataTask];
+        return;
+    }
+    
+    NSString *localWebCacheFilePath = [self loadLocalWebSourcePathWithUrl:dataTask.currentRequest.URL.absoluteString];
+        //如果存在就不再缓存
+    if (localWebCacheFilePath)
+    {
+        return;
+    }
+    [self storeData:cachedResponse.data forURL:pathString];
+}
+
+- (void)getCachedResponseForDataTask:(NSURLSessionDataTask *)dataTask completionHandler:(void (^) (NSCachedURLResponse * __nullable cachedResponse))completionHandler
+{
+    NSString *pathString = [[dataTask.currentRequest URL] absoluteString];
+    NSLog(@"getCachedResponseForDataTask forDataTask %@", pathString);
+    NSString *ext = [self getExtFromUrl:pathString];
+    
+    if (![supportExt containsObject:ext])
+    {
+        return [super getCachedResponseForDataTask:dataTask completionHandler:completionHandler];
+    }
+    
+    NSDictionary *cacheMimeDict = @{@"jpg":@"image/jpg", @"jpeg":@"image/jpeg", @"png":@"image/png", @"gif":@"image/gif", @"css":@"text/css", @"js":@"application/javascript"};
+    NSString *mime = cacheMimeDict[ext];
+    
+    if ([self hasDataForURL:pathString])
+    {
+        NSData *data = [self dataForURL:pathString];
+        NSURLResponse *response = [[NSURLResponse alloc] initWithURL:[dataTask.currentRequest URL] MIMEType:mime expectedContentLength:[data length] textEncodingName:nil];
+        NSCachedURLResponse *resp = [[NSCachedURLResponse alloc] initWithResponse:response data:data];
+        if(completionHandler)
+        {
+            completionHandler(resp);
+        }
+        return;
+    }
+    
+    if (replaceRequestFileWithLocalFile && [replaceRequestFileWithLocalFile count])
+    {
+        NSString *targetUrl = [self getUrlWithParsUrl:dataTask.currentRequest.URL.absoluteString];
+        if ([replaceRequestFileWithLocalFile.allKeys containsObject:targetUrl])
+        {
+            NSString *localWebCacheFilePath = [self loadLocalWebSourcePathWithUrl:dataTask.currentRequest.URL.absoluteString];
+            NSData *data = [NSData dataWithContentsOfFile:localWebCacheFilePath];
+            if (data && data.length)
+            {
+                NSURLResponse *response = [[NSURLResponse alloc] initWithURL:[dataTask.currentRequest URL] MIMEType:mime expectedContentLength:[data length] textEncodingName:nil];
+                NSCachedURLResponse *resp = [[NSCachedURLResponse alloc] initWithResponse:response data:data];
+                if(completionHandler)
+                {
+                    completionHandler(resp);
+                }
+                return;
+            }
+        }
+    }
+    
+    return [super getCachedResponseForDataTask:dataTask completionHandler:completionHandler];
+}
+
 @end

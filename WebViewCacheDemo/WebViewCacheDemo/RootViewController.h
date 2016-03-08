@@ -12,6 +12,7 @@
 @interface RootViewController : UIViewController<UIWebViewDelegate>
 
 @property(nonatomic, strong) AutoCacheWebView   *webView;
+@property(nonatomic, strong) UIWebView          *webView2;
 @property(nonatomic, strong) IBOutlet UIButton  *refreshBtn;
 
 

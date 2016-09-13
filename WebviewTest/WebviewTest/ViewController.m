@@ -17,9 +17,9 @@
 @property(nonatomic, strong) CustomWebView      *webView;
 @property(nonatomic, strong) NSString           *url;
 /// UIWebView开始初始化时间(单位妙, 后期上报需要乘1000)
-@property (nonatomic) NSTimeInterval startRequestTime;
+@property (nonatomic) NSTimeInterval            startRequestTime;
 /// H5所有资源加载完毕(包括mainFrame中引入的iframe/frame, 图片, js, css等) (单位妙, 后期上报需要乘1000)
-@property (nonatomic) NSTimeInterval h5PageAllLoadTime;
+@property (nonatomic) NSTimeInterval            h5PageAllLoadTime;
 @end
 
 @implementation ViewController
@@ -43,18 +43,18 @@
     [self.view addSubview:self.webView = [[CustomWebView alloc] initWithFrame:self.view.bounds]];
     self.webView.delegate = self;
     self.webView.scalesPageToFit = YES;
-    NSString *url = @"http://www.bilibili.com/html/activity-2233birthday-m.html";
-    url = @"http://www.bilibili.com/html/activity-2233birthday.html";
-    url = @"http://www.ifanr.com/432516";
-    url = @"about:blank;";
-    url = @"http://www.bilibili.com/html/activity-cinecism-m.html";
-    url = @"http://www.bilibili.com/html/activity-punipuni3-m.html";
-    url = @"http://www.bilibili.com/html/activity-2233birthday-m.html";
-    url = @"http://www.bilibili.com/html/mobile_MMD.html";
-    url = @"http://www.bilibili.com/html/mobile_cover.html";
-    url = @"http://www.bilibili.com/html/mobile_ice.html";
+    self.url = @"http://www.bilibili.com/html/activity-2233birthday-m.html";
+//    _url = @"http://www.bilibili.com/html/activity-2233birthday.html";
+//    _url = @"http://www.ifanr.com/432516";
+//    _url = @"about:blank;";
+//    _url = @"http://www.bilibili.com/html/activity-cinecism-m.html";
+//    _url = @"http://www.bilibili.com/html/activity-punipuni3-m.html";
+//    _url = @"http://www.bilibili.com/html/activity-2233birthday-m.html";
+//    _url = @"http://www.bilibili.com/html/mobile_MMD.html";
+//    _url = @"http://www.bilibili.com/html/mobile_cover.html";
+    _url = @"http://www.bilibili.com/html/mobile_ice.html";
 
-    [self.webView loadRequest:[NSURLRequest requestWithURL:[NSURL URLWithString:url]]];
+    [self.webView loadRequest:[NSURLRequest requestWithURL:[NSURL URLWithString:_url]]];
 }
 
 - (void)onClickLeft:(id)sender

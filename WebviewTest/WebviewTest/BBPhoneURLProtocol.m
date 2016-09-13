@@ -106,20 +106,20 @@
 - (void)URLSession:(NSURLSession *)session dataTask:(NSURLSessionDataTask *)dataTask didReceiveData:(NSData *)data
 {
     NSLog(@"didReceiveData %@", dataTask.currentRequest.URL);
-    NSString *js = nil;
     /// iOS9之前系统
     if (!(SYSTEM_VERSION_GREATER_THAN_OR_EQUAL_TO(@"9.0"))) {
-        js = @"</title>\n<script type=\"text/javascript\">if(window.injected==undefined){window.injected=true;if(window.performance==undefined){window.performance={};window.performance.timing={};window.performance.timing.domLoading=(new Date()).getTime();window.performance.timing.responseEnd=%zd;window.addEventListener(\"DOMContentLoaded\",function(){window.performance.timing.domContentLoadedEventEnd=(new Date()).getTime()});window.addEventListener(\"load\",function(){window.performance.timing.loadEventEnd=(new Date()).getTime()})}else{if(window.performance.timing==undefined){window.performance.timing={};window.performance.timing.domLoading=(new Date()).getTime();window.performance.timing.responseEnd=%zd;window.addEventListener(\"DOMContentLoaded\",function(){window.performance.timing.domContentLoadedEventEnd=(new Date()).getTime()});window.addEventListener(\"load\",function(){window.performance.timing.loadEventEnd=(new Date()).getTime()})}}};</script>";
+        NSString *js = @"</title>\n<script type=\"text/javascript\">if(window.injected==undefined){window.injected=true;if(window.performance==undefined){window.performance={};window.performance.timing={};window.performance.timing.domLoading=(new Date()).getTime();window.performance.timing.responseEnd=%zd;window.addEventListener(\"DOMContentLoaded\",function(){window.performance.timing.domContentLoadedEventEnd=(new Date()).getTime()});window.addEventListener(\"load\",function(){window.performance.timing.loadEventEnd=(new Date()).getTime()})}else{if(window.performance.timing==undefined){window.performance.timing={};window.performance.timing.domLoading=(new Date()).getTime();window.performance.timing.responseEnd=%zd;window.addEventListener(\"DOMContentLoaded\",function(){window.performance.timing.domContentLoadedEventEnd=(new Date()).getTime()});window.addEventListener(\"load\",function(){window.performance.timing.loadEventEnd=(new Date()).getTime()})}}};</script>";
         /// iOS9之前将timing.responseEnd赋值[[NSDate date] timeIntervalSince1970]
         long responseEnd = [[NSDate date] timeIntervalSince1970] * 1000;
         js = [NSString stringWithFormat:js, responseEnd, responseEnd];
-    }
-    NSString *html = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
-    NSRange rang = [html rangeOfString:@"</title>"];
-    if (rang.location != NSNotFound) {
-        html = [html stringByReplacingOccurrencesOfString:@"</title>" withString:js];
-        NSData *newData = [html dataUsingEncoding:NSUTF8StringEncoding];
-        [self.client URLProtocol:self didLoadData:newData];
+        
+        NSString *html = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
+        NSRange rang = [html rangeOfString:@"</title>"];
+        if (rang.location != NSNotFound) {
+            html = [html stringByReplacingOccurrencesOfString:@"</title>" withString:js];
+            NSData *newData = [html dataUsingEncoding:NSUTF8StringEncoding];
+            [self.client URLProtocol:self didLoadData:newData];
+        }
     } else {
         [self.client URLProtocol:self didLoadData:data];
     }

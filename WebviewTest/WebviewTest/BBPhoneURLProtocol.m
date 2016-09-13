@@ -7,8 +7,10 @@
 //
 
 #import "BBPhoneURLProtocol.h"
+#import <UIKit/UIKit.h>
 
-#define BBPHONE_NoHandleByURLProtocolKey       (@"NoNeedHandleByURLProtocol")
+#define SYSTEM_VERSION_GREATER_THAN_OR_EQUAL_TO(v)  ([[[UIDevice currentDevice] systemVersion] compare:v options:NSNumericSearch] != NSOrderedAscending)
+#define kNoHandleByURLProtocolKey       (@"NoNeedHandleByURLProtocol")
 
 @interface BBPhoneURLProtocol ()<NSURLSessionTaskDelegate, NSURLSessionDataDelegate>
 
@@ -30,14 +32,13 @@
 
 + (BOOL)canProcess:(NSURLRequest *)request
 {
-    if([NSURLProtocol propertyForKey:BBPHONE_NoHandleByURLProtocolKey inRequest:request]) {
+    if([NSURLProtocol propertyForKey:kNoHandleByURLProtocolKey inRequest:request]) {
         return NO;
     }
     
     NSString *acceptStr = [request valueForHTTPHeaderField:@"Accept"];
     /// 如果url已http或https开头，则进行拦截处理，否则不处理
-    /// 仅处理自家域名
-    if (acceptStr.length && ([request.URL.absoluteString hasPrefix:@"http://"] /*|| [request.URL.absoluteString hasPrefix:@"https://"]*/)) {
+    if (acceptStr.length && ([request.URL.absoluteString hasPrefix:@"http://"] || [request.URL.absoluteString hasPrefix:@"https://"])) {
         /// 只处理html
         if ([acceptStr rangeOfString:@"text/html,application/xhtml+xml,application/xml"].location != NSNotFound) {
             return YES;
@@ -63,7 +64,7 @@
     NSLog(@"startLoading %@", self.request.URL);
     NSMutableURLRequest *request = [self.request mutableCopy];
     /// 表示该请求已经被处理，防止无限循环
-    [NSURLProtocol setProperty:@YES forKey:BBPHONE_NoHandleByURLProtocolKey inRequest:request];
+    [NSURLProtocol setProperty:@YES forKey:kNoHandleByURLProtocolKey inRequest:request];
     
     NSURLSessionConfiguration *configuration = [NSURLSessionConfiguration defaultSessionConfiguration];
     self.session = [NSURLSession sessionWithConfiguration:configuration delegate:self delegateQueue:[NSOperationQueue currentQueue]];
@@ -101,10 +102,27 @@
     completionHandler(NSURLSessionResponseAllow);
 }
 
+
 - (void)URLSession:(NSURLSession *)session dataTask:(NSURLSessionDataTask *)dataTask didReceiveData:(NSData *)data
 {
     NSLog(@"didReceiveData %@", dataTask.currentRequest.URL);
-    [self.client URLProtocol:self didLoadData:data];
+    NSString *js = nil;
+    /// iOS9之前系统
+    if (!(SYSTEM_VERSION_GREATER_THAN_OR_EQUAL_TO(@"9.0"))) {
+        js = @"</title>\n<script type=\"text/javascript\">if(window.injected==undefined){window.injected=true;if(window.performance==undefined){window.performance={};window.performance.timing={};window.performance.timing.domLoading=(new Date()).getTime();window.performance.timing.responseEnd=%zd;window.addEventListener(\"DOMContentLoaded\",function(){window.performance.timing.domContentLoadedEventEnd=(new Date()).getTime()});window.addEventListener(\"load\",function(){window.performance.timing.loadEventEnd=(new Date()).getTime()})}else{if(window.performance.timing==undefined){window.performance.timing={};window.performance.timing.domLoading=(new Date()).getTime();window.performance.timing.responseEnd=%zd;window.addEventListener(\"DOMContentLoaded\",function(){window.performance.timing.domContentLoadedEventEnd=(new Date()).getTime()});window.addEventListener(\"load\",function(){window.performance.timing.loadEventEnd=(new Date()).getTime()})}}};</script>";
+        /// iOS9之前将timing.responseEnd赋值[[NSDate date] timeIntervalSince1970]
+        long responseEnd = [[NSDate date] timeIntervalSince1970] * 1000;
+        js = [NSString stringWithFormat:js, responseEnd, responseEnd];
+    }
+    NSString *html = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
+    NSRange rang = [html rangeOfString:@"</title>"];
+    if (rang.location != NSNotFound) {
+        html = [html stringByReplacingOccurrencesOfString:@"</title>" withString:js];
+        NSData *newData = [html dataUsingEncoding:NSUTF8StringEncoding];
+        [self.client URLProtocol:self didLoadData:newData];
+    } else {
+        [self.client URLProtocol:self didLoadData:data];
+    }
 }
 
 //- (void)URLSession:(NSURLSession *)session dataTask:(NSURLSessionDataTask *)dataTask willCacheResponse:(NSCachedURLResponse *)proposedResponse

@@ -77,6 +77,21 @@
     }
 }
 
+- (void)webViewMainFrameDidFailLoad:(id)arg1 withError:(id)arg2
+{
+    NSLog(@"webViewMainFrameDidFailLoad");
+}
+
+- (void)webViewMainFrameDidFinishLoad:(id)arg1
+{
+    NSLog(@"webViewMainFrameDidFinishLoad");
+}
+
+- (void)webViewMainFrameDidCommitLoad:(id)arg1
+{
+    NSLog(@"webViewMainFrameDidCommitLoad");
+}
+
 #pragma mark
 #pragma mark NSURLConnectionDataDelegate
 
